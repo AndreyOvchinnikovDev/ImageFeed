@@ -162,7 +162,7 @@
                                 </connections>
                             </button>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="fOo-G4-H9r" userLabel="Share Button">
-                                <rect key="frame" x="171.66666666666666" y="732" width="50" height="50"/>
+                                <rect key="frame" x="171.66666666666666" y="751" width="50" height="50"/>
                                 <inset key="imageEdgeInsets" minX="0.0" minY="0.0" maxX="2.2250738585072014e-308" maxY="0.0"/>
                                 <state key="normal" image="share_button "/>
                                 <connections>
@@ -174,7 +174,7 @@
                         <color key="backgroundColor" red="0.1019607843" green="0.1058823529" blue="0.1333333333" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
                             <constraint firstItem="1ly-C1-Um9" firstAttribute="top" secondItem="pKh-48-itX" secondAttribute="top" id="91Q-VX-Zk8"/>
-                            <constraint firstItem="pKh-48-itX" firstAttribute="bottom" secondItem="fOo-G4-H9r" secondAttribute="bottom" constant="36" id="GgC-An-tMv"/>
+                            <constraint firstItem="pKh-48-itX" firstAttribute="bottom" secondItem="fOo-G4-H9r" secondAttribute="bottom" constant="17" id="GgC-An-tMv"/>
                             <constraint firstItem="1ly-C1-Um9" firstAttribute="leading" secondItem="pKh-48-itX" secondAttribute="leading" id="HvN-lW-fio"/>
                             <constraint firstItem="fOo-G4-H9r" firstAttribute="centerX" secondItem="Gxs-1N-QTF" secondAttribute="centerX" id="ent-uk-AZV"/>
                             <constraint firstItem="atp-k1-MIF" firstAttribute="bottom" secondItem="Gxs-1N-QTF" secondAttribute="bottom" id="iTs-l3-wFI"/>
