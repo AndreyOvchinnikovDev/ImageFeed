@@ -6,12 +6,15 @@
 //
 
 import UIKit
+import Kingfisher
 
 final class ProfileViewController: UIViewController {
+    private let profileService = ProfileService.shared
+    private var profileImageServiceObserver: NSObjectProtocol?
     
     private let imageView: UIImageView = {
         let image = UIImageView()
-        image.image = UIImage(named: "Photo")
+        image.image = UIImage(named: "person.crop.circle.fill")
         return image
     }()
     
@@ -21,7 +24,7 @@ final class ProfileViewController: UIViewController {
         return button
     }()
     
-    private let nameLabel: UILabel = {
+    private var nameLabel: UILabel = {
         let label = UILabel()
         label.font = .boldSystemFont(ofSize: 23)
         label.text = "Екатерина Новикова"
@@ -40,17 +43,32 @@ final class ProfileViewController: UIViewController {
     private let descriptionLabel: UILabel = {
         let label = UILabel()
         label.font = .systemFont(ofSize: 13)
-        label.text = "Hello, World!"
+        label.text = ""
         label.textColor = .white
         return label
     }()
     
     override func viewDidLoad() {
         super.viewDidLoad()
+       
         view.backgroundColor = .ypBlack
         
         setupSubviews(imageView, logoutButton, nameLabel, loginNameLabel, descriptionLabel)
         setupConstraints()
+        
+        profileImageServiceObserver = NotificationCenter.default.addObserver(
+            forName: ProfileImageService.didChangeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self = self else { return }
+            self.updateAvatar()
+        }
+            updateAvatar()
+        
+        if let profile = profileService.profile {
+            updateProfileDetails(profile: profile)
+        }
     }
     
     override var preferredStatusBarStyle: UIStatusBarStyle {
@@ -88,5 +106,29 @@ final class ProfileViewController: UIViewController {
             view.addSubview(subview)
             subview.translatesAutoresizingMaskIntoConstraints = false
         }
+    }
+    
+    private func updateAvatar() {
+        guard
+            let profileImageURL = ProfileImageService.shared.avatarURL,
+            let url = URL(string: profileImageURL)
+                
+        else { return }
+        let cache = ImageCache.default
+        cache.clearDiskCache()
+        
+        let processor = RoundCornerImageProcessor(cornerRadius: 16)
+        
+        imageView.kf.setImage(
+            with: url,
+            placeholder: UIImage(named: "person.crop.circle.fill"),
+            options: [.processor(processor)]
+        )
+    }
+    
+    private func updateProfileDetails(profile: Profile) {
+        self.nameLabel.text = profile.name
+        self.loginNameLabel.text = profile.loginName
+        self.descriptionLabel.text = profile.bio
     }
 }

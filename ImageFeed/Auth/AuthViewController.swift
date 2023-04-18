@@ -13,9 +13,8 @@ protocol AuthViewControllerDelegate: AnyObject {
 
 final class AuthViewController: UIViewController {
     private let showWebViewSegueIdentifier = "ShowWebView"
-    
     weak var delegate: AuthViewControllerDelegate?
-    
+ 
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == showWebViewSegueIdentifier {
             guard let webViewViewController = segue.destination as? WebViewViewController
@@ -25,6 +24,13 @@ final class AuthViewController: UIViewController {
             super.prepare(for: segue, sender: sender)
         }
     }
+//     func showAlert() {
+//
+//        let alert = UIAlertController(title: "Что-то пошло не так", message: "Неудалось войти в систему", preferredStyle: .alert)
+//         let action = UIAlertAction(title: "Ok", style: .cancel)
+//        alert.addAction(action)
+//        present(alert, animated: true)
+//    }
     
 }
 
