@@ -15,7 +15,7 @@ final class SplashViewController: UIViewController {
     private let imageService = ProfileImageService.shared
     private var storage = OAuth2TokenStorage()
     
-    private var serviceError: Bool = false
+    private var isFirstLoad = true
     
     private let imageView: UIImageView = {
         let image = UIImageView()
@@ -28,29 +28,26 @@ final class SplashViewController: UIViewController {
         view.backgroundColor = .ypBlack
         view.addSubview(imageView)
         setupConstraints()
-        
+       
     }
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        
-    }
+   
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        if serviceError == true {
-            showAlert()
-        }
-        if storage.token == "" {
+      // storage.removeToken()
+        
+        if isFirstLoad  {
             
-            showAuthViewController()
-            
-        } else {
-            profileService.fetchProfile(storage.token) {_ in
-                self.imageService.fetchProfileImageURL  (userName: self.profileService.profile?.userName ?? "") { _ in }
-                self.switchToTabBarController()
+            if let token = storage.token {
+                
+                fetchProfile(token)
+                
+            } else {
+                showAuthViewController()
+                //    switchToTabBarController()
+                isFirstLoad = false
             }
         }
     }
-    
     private func showAuthViewController() {
         
         let authViewController = UIStoryboard(
@@ -77,7 +74,7 @@ final class SplashViewController: UIViewController {
         let alert = UIAlertController(title: "Что-то пошло не так", message: "Неудалось войти в систему", preferredStyle: .alert)
         let action = UIAlertAction(title: "Ok", style: .cancel) { [weak self] _ in
             guard let self = self else { return }
-            self.serviceError = false
+           // self.serviceError = false
             self.showAuthViewController()
         }
         alert.addAction(action)
@@ -94,25 +91,50 @@ final class SplashViewController: UIViewController {
 extension SplashViewController: AuthViewControllerDelegate {
     func authViewController(_ vc: AuthViewController, didAuthenticateWithCode code: String) {
         UIBlockingProgressHUD.show()
-        
-        oauth2Service.fetchAuthToken(code: code) { [weak self] result in
-            guard let self = self else { return }
-            switch result {
-            case .success(let data):
-                self.storage.token = data.accessToken
-                switchToTabBarController()
-                profileService.fetchProfile(storage.token) { _ in
-                    ProfileImageService.shared.fetchProfileImageURL(userName:  self.profileService.profile?.userName ?? "") { _ in }
-                    UIBlockingProgressHUD.dismiss()
-                }
-            case .failure(_):
+        dismiss(animated: true) { [weak self] in
+            guard let self else { return }
+            self.fetchAuthToken(code)
+        }
+    }
+        private func fetchAuthToken(_ code: String) {
+            oauth2Service.fetchAuthToken(code: code) { [weak self] result  in
+                guard let self else { return }
                 DispatchQueue.main.async {
-                    self.dismiss(animated: true)
-                    self.serviceError = true
-                    UIBlockingProgressHUD.dismiss()
+                    switch result {
+                        
+                    case .success(let data):
+                        print(data)
+                        UIBlockingProgressHUD.dismiss()
+                        self.switchToTabBarController()
+                        self.storage.token = data.accessToken
+                        self.fetchProfile(data.accessToken)
+                    case .failure(_):
+                        UIBlockingProgressHUD.dismiss()
+                        self.showAlert()
+                        break
+                        
+                    }
                 }
             }
         }
     }
-}
+
+    extension SplashViewController {
+        private func fetchProfile(_ token: String?) {
+            guard let token else { return }
+            profileService.fetchProfile(token) { result in
+                switch result {
+                    
+                case .success(let profile):
+                    UIBlockingProgressHUD.dismiss()
+                    self.imageService.fetchProfileImageURL(userName: profile.userName) { _ in }
+                    self.switchToTabBarController()
+                case .failure(_):
+                    self.showAlert()
+                    break
+                }
+            }
+        }
+    }
+
 

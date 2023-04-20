@@ -13,7 +13,7 @@ final class ProfileImageService {
     private(set) var avatarURL: String?
     private var task: URLSessionTask?
     
-    func fetchProfileImageURL(userName: String, _ completion: @escaping(Result<String, Error>) -> Void) {
+    func fetchProfileImageURL(userName: String,  completion: @escaping(Result<String, Error>) -> Void) {
         
         assert(Thread.isMainThread)
         task?.cancel()
@@ -22,25 +22,31 @@ final class ProfileImageService {
             completion(.failure(NetworkError.invalidURL))
             return
         }
+        guard let token = OAuth2TokenStorage().token else {
+            return assertionFailure("no token")
+        }
         
         var request = URLRequest(url: url)
-        request.setValue("Bearer \(OAuth2TokenStorage().token)", forHTTPHeaderField: "Authorization")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         
         let task = URLSession.shared.objectTask(for: request) { [weak self] (result: Result<UserResult, Error>) in
+            guard let self else { return }
             switch result {
                 
             case .success(let data):
-                self?.avatarURL = data.profileImage["small"]
-                completion(.success(data.profileImage["small"] ?? "medium"))
+                let image = data.profileImage.small
+                self.avatarURL = image
+                completion(.success(self.avatarURL!))
                 NotificationCenter.default.post(
                     name: ProfileImageService.didChangeNotification,
                     object: self,
-                    userInfo: ["URL": data.profileImage["small"] ?? "medium"])
-                self?.task = nil
+                    userInfo: ["URL": image])
+                self.task = nil
             case .failure(_):
                 completion(.failure(NetworkError.urlSessionError))
             }
         }
         self.task = task
+        task.resume()
     }
 }

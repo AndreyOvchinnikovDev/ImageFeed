@@ -24,19 +24,12 @@ final class AuthViewController: UIViewController {
             super.prepare(for: segue, sender: sender)
         }
     }
-//     func showAlert() {
-//
-//        let alert = UIAlertController(title: "Что-то пошло не так", message: "Неудалось войти в систему", preferredStyle: .alert)
-//         let action = UIAlertAction(title: "Ok", style: .cancel)
-//        alert.addAction(action)
-//        present(alert, animated: true)
-//    }
     
 }
 
 extension AuthViewController: WebViewViewControllerDelegate {
     func webViewViewController(_vc: WebViewViewController, didAuthenticateWithCode code: String) {
-        delegate?.authViewController(self, didAuthenticateWithCode: code)
+        delegate?.authViewController(self, didAuthenticateWithCode: code) 
     }
     
     func webViewViewControllerDidCancel(_vc: WebViewViewController) {
