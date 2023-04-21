@@ -27,13 +27,13 @@ final class ProfileService {
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         
         let task = URLSession.shared.objectTask(for: request) { [weak self] (result: Result<ProfileResult, Error>) in
-            
+            guard let self else { return }
             switch result {
             case .success(let data):
-                let profile = Profile(userName: data.userName, name: data.firstName + " " + data.lastName, loginName: "@" + data.userName, bio: data.bio)
-                self?.profile = profile
+                let profile = Profile.createProfile(profile: data)
+                self.profile = profile
                 completion(.success(profile))
-                self?.task = nil
+                self.task = nil
             case .failure(_):
                 completion(.failure(NetworkError.urlSessionError))
             }

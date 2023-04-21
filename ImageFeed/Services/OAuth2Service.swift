@@ -50,13 +50,14 @@ class OAuth2Service: NetworkRouting {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         let task = URLSession.shared.objectTask(for: request) { [weak self] (result: Result<OAuthTokenResponseBody, Error>) in
+            guard let self else { return }
             switch result {
             case .success(let data):
                 
                 completion(.success(data))
-                self?.task = nil
+                self.task = nil
             case .failure(_):
-                self?.lastCode = nil
+                self.lastCode = nil
                 completion(.failure(NetworkError.urlSessionError))
             }
         }

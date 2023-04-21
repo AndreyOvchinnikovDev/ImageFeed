@@ -12,4 +12,13 @@ struct Profile {
     let name: String
     let loginName: String
     let bio: String
+    
+    static func createProfile(profile: ProfileResult) -> Profile {
+        Profile(
+            userName: profile.userName,
+            name: profile.firstName + " " + profile.lastName,
+            loginName: "@" + profile.userName,
+            bio: profile.bio
+        )
+    }
 }

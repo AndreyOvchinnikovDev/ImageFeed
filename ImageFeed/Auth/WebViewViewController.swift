@@ -14,7 +14,7 @@ protocol WebViewViewControllerDelegate: AnyObject {
 }
 
 final class WebViewViewController: UIViewController {
-    @IBOutlet private var webView: WKWebView!
+    @IBOutlet private weak var webView: WKWebView!
     @IBOutlet private weak var progressView: UIProgressView!
     private var estimatedProgressObservation: NSKeyValueObservation?
     
@@ -33,14 +33,14 @@ final class WebViewViewController: UIViewController {
         )
         webView.navigationDelegate = self
         
-        var urlComponents = URLComponents(string: OAuth2Service.Urls.urlToGetCode.rawValue)!
+        guard var urlComponents = URLComponents(string: OAuth2Service.Urls.urlToGetCode.rawValue) else { return }
         urlComponents.queryItems = [
             URLQueryItem(name: "client_id", value: Constants.accessKey),
             URLQueryItem(name: "redirect_uri", value: Constants.redirectURI),
             URLQueryItem(name: "response_type", value: "code"),
             URLQueryItem(name: "scope", value: Constants.accessScope)
         ]
-        let url = urlComponents.url!
+        guard let url = urlComponents.url else { return }
         
         let request = URLRequest(url: url)
         

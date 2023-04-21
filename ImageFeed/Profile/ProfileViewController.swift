@@ -50,7 +50,7 @@ final class ProfileViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-       
+        
         view.backgroundColor = .ypBlack
         
         setupSubviews(imageView, logoutButton, nameLabel, loginNameLabel, descriptionLabel)
@@ -64,7 +64,7 @@ final class ProfileViewController: UIViewController {
             guard let self = self else { return }
             self.updateAvatar()
         }
-            updateAvatar()
+        updateAvatar()
         
         if let profile = profileService.profile {
             updateProfileDetails(profile: profile)

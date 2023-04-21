@@ -28,26 +28,21 @@ final class SplashViewController: UIViewController {
         view.backgroundColor = .ypBlack
         view.addSubview(imageView)
         setupConstraints()
-       
     }
-   
+    
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-      // storage.removeToken()
         
         if isFirstLoad  {
-            
             if let token = storage.token {
-                
                 fetchProfile(token)
-                
             } else {
                 showAuthViewController()
-                //    switchToTabBarController()
                 isFirstLoad = false
             }
         }
     }
+    
     private func showAuthViewController() {
         
         let authViewController = UIStoryboard(
@@ -62,19 +57,23 @@ final class SplashViewController: UIViewController {
     
     private func setupConstraints() {
         imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.clipsToBounds = true
         NSLayoutConstraint.activate([
-            imageView.widthAnchor.constraint(equalToConstant: 70),
-            imageView.heightAnchor.constraint(equalToConstant: 70),
+//            imageView.widthAnchor.constraint(equalToConstant: 70),
+//            imageView.heightAnchor.constraint(equalToConstant: 70),
             imageView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
             imageView.centerXAnchor.constraint(equalTo: view.centerXAnchor)
         ])
     }
     
     private func showAlert() {
-        let alert = UIAlertController(title: "Что-то пошло не так", message: "Неудалось войти в систему", preferredStyle: .alert)
+        let alert = UIAlertController(
+            title: "Что-то пошло не так",
+            message: "Неудалось войти в систему",
+            preferredStyle: .alert
+        )
         let action = UIAlertAction(title: "Ok", style: .cancel) { [weak self] _ in
             guard let self = self else { return }
-           // self.serviceError = false
             self.showAuthViewController()
         }
         alert.addAction(action)
@@ -96,45 +95,46 @@ extension SplashViewController: AuthViewControllerDelegate {
             self.fetchAuthToken(code)
         }
     }
-        private func fetchAuthToken(_ code: String) {
-            oauth2Service.fetchAuthToken(code: code) { [weak self] result  in
-                guard let self else { return }
-                DispatchQueue.main.async {
-                    switch result {
-                        
-                    case .success(let data):
-                        print(data)
-                        UIBlockingProgressHUD.dismiss()
-                        self.switchToTabBarController()
-                        self.storage.token = data.accessToken
-                        self.fetchProfile(data.accessToken)
-                    case .failure(_):
-                        UIBlockingProgressHUD.dismiss()
-                        self.showAlert()
-                        break
-                        
-                    }
-                }
-            }
-        }
-    }
-
-    extension SplashViewController {
-        private func fetchProfile(_ token: String?) {
-            guard let token else { return }
-            profileService.fetchProfile(token) { result in
+    
+    private func fetchAuthToken(_ code: String) {
+        oauth2Service.fetchAuthToken(code: code) { [weak self] result  in
+            guard let self else { return }
+            DispatchQueue.main.async {
                 switch result {
                     
-                case .success(let profile):
+                case .success(let data):
                     UIBlockingProgressHUD.dismiss()
-                    self.imageService.fetchProfileImageURL(userName: profile.userName) { _ in }
                     self.switchToTabBarController()
+                    self.storage.token = data.accessToken
+                    self.fetchProfile(data.accessToken)
                 case .failure(_):
+                    UIBlockingProgressHUD.dismiss()
                     self.showAlert()
                     break
+                    
                 }
             }
         }
     }
+    
+    private func fetchProfile(_ token: String?) {
+        guard let token else { return }
+        profileService.fetchProfile(token) { result in
+            switch result {
+                
+            case .success(let profile):
+                UIBlockingProgressHUD.dismiss()
+                self.imageService.fetchProfileImageURL(userName: profile.userName) { _ in }
+                self.switchToTabBarController()
+            case .failure(_):
+                self.showAlert()
+                break
+            }
+        }
+    }
+    
+}
+
+
 
 
