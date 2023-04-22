@@ -93,7 +93,9 @@ extension URLSession {
                     completion(.success(responseBody))
                 }
             } catch {
-                completion(.failure(NetworkError.decodingError))
+                DispatchQueue.main.async {
+                    completion(.failure(NetworkError.decodingError))
+                }
             }
         }
         task.resume()

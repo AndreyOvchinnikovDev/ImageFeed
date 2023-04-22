@@ -18,7 +18,7 @@ struct Profile {
             userName: profile.userName,
             name: profile.firstName + " " + profile.lastName,
             loginName: "@" + profile.userName,
-            bio: profile.bio
+            bio: profile.bio ?? ""
         )
     }
 }
