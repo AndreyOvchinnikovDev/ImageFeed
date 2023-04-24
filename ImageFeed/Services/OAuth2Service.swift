@@ -11,10 +11,12 @@ enum NetworkError: Error {
     case httpStatusCode(Int)
     case urlRequestError(Error)
     case urlSessionError
+    case decodingError
+    case invalidURL
 }
 
 protocol NetworkRouting {
-    func fetchAuthToken(code: String, completion: @escaping (Result<Data, Error>) -> Void)
+    func fetchAuthToken(code: String, completion: @escaping (Result<OAuthTokenResponseBody, Error>) -> Void)
 }
 
 class OAuth2Service: NetworkRouting {
@@ -23,8 +25,16 @@ class OAuth2Service: NetworkRouting {
         case urlToGetToken = "https://unsplash.com/oauth/token"
     }
     
-    func fetchAuthToken(code: String, completion: @escaping (Result<Data, Error>) -> Void) {
-        var urlComponents = URLComponents(string: Urls.urlToGetToken.rawValue)!
+    private var task: URLSessionTask?
+    private var lastCode: String?
+    
+    func fetchAuthToken(code: String, completion: @escaping (Result<OAuthTokenResponseBody, Error>) -> Void) {
+        assert(Thread.isMainThread)
+        if lastCode == code { return }
+        task?.cancel()
+        lastCode = code
+        
+        guard var urlComponents = URLComponents(string: Urls.urlToGetToken.rawValue) else { return }
         urlComponents.queryItems = [
             URLQueryItem(name: "client_id", value: Constants.accessKey),
             URLQueryItem(name: "client_secret", value: Constants.secretKey),
@@ -32,13 +42,35 @@ class OAuth2Service: NetworkRouting {
             URLQueryItem(name: "code", value: code),
             URLQueryItem(name: "grant_type", value: "authorization_code")
         ]
-        let url = urlComponents.url!
+        guard let url = urlComponents.url else {
+            completion(.failure(NetworkError.invalidURL))
+            return
+        }
         
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
-        
+        let task = URLSession.shared.objectTask(for: request) { [weak self] (result: Result<OAuthTokenResponseBody, Error>) in
+            guard let self else { return }
+            switch result {
+            case .success(let data):
+                
+                completion(.success(data))
+                self.task = nil
+            case .failure(_):
+                self.lastCode = nil
+                completion(.failure(NetworkError.urlSessionError))
+            }
+        }
+        self.task = task
+    }
+}
+
+extension URLSession {
+    func objectTask<T: Decodable>(
+        for request: URLRequest,
+        completion: @escaping (Result<T, Error>) -> Void
+    ) -> URLSessionTask {
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
-            
             if error != nil {
                 DispatchQueue.main.async {
                     completion(.failure(NetworkError.urlSessionError))
@@ -53,14 +85,20 @@ class OAuth2Service: NetworkRouting {
                     return
                 }
             }
-            
             guard let data = data else { return }
-            DispatchQueue.main.async {
-                completion(.success(data))
-                
+            
+            do {
+                let responseBody = try JSONDecoder().decode(T.self, from: data)
+                DispatchQueue.main.async {
+                    completion(.success(responseBody))
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    completion(.failure(NetworkError.decodingError))
+                }
             }
         }
         task.resume()
+        return task
     }
-    
 }
