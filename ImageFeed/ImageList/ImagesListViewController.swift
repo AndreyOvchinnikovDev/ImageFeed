@@ -12,6 +12,7 @@ final class ImagesListViewController: UIViewController {
     
     @IBOutlet private var tableView: UITableView!
     
+    private var imageService = ImageListService()
     private let photosName: [String] = Array(0..<20).map{ "\($0)" }
     private lazy var dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -26,8 +27,30 @@ final class ImagesListViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+   
+            fetchPhotos()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            self.fetchPhotos()
+        }
         
+    
     }
+    
+    private func fetchPhotos() {
+        imageService.fetchPhotosNextPage { [weak self] result in
+            guard let self = self else {return}
+            switch result {
+                
+            case .success(_):
+                print("HI")
+                
+            case .failure(_):
+                print("error")
+            }
+        }
+    }
+    
+    
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == showSingleImageSegueIdentifier {
@@ -70,8 +93,8 @@ extension ImagesListViewController: UITableViewDataSource {
         return cell
     }
     
-    
 }
+
 extension ImagesListViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         performSegue(withIdentifier: showSingleImageSegueIdentifier, sender: indexPath)
