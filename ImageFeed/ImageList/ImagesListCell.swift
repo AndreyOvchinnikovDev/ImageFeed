@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import Kingfisher
 
 final class ImagesListCell: UITableViewCell {
     static let reuseIdentifier = "ImagesListCell"
@@ -16,6 +17,12 @@ final class ImagesListCell: UITableViewCell {
     @IBOutlet weak var containerView: UIView!
     
     private let gradient = CAGradientLayer()
+    
+    override func prepareForReuse() {
+       super.prepareForReuse()
+        self.accessoryType = .none
+        cellImage.kf.cancelDownloadTask()
+    }
     
     override func layoutSubviews() {
         super.layoutSubviews()
@@ -29,4 +36,6 @@ final class ImagesListCell: UITableViewCell {
         gradient.colors = [startColor, endColor]
         containerView.layer.insertSublayer(gradient, at: 0)
     }
+    
 }
+
