@@ -8,6 +8,10 @@
 import UIKit
 import Kingfisher
 
+protocol ImagesListCellDelegate : AnyObject {
+    func imageListCellDidTapLike(_ cell: ImagesListCell)
+}
+
 final class ImagesListCell: UITableViewCell {
     static let reuseIdentifier = "ImagesListCell"
     
@@ -16,6 +20,7 @@ final class ImagesListCell: UITableViewCell {
     @IBOutlet weak var dateLabel: UILabel!
     @IBOutlet weak var containerView: UIView!
     
+    weak var delegate: ImagesListCellDelegate?
     private let gradient = CAGradientLayer()
     
     override func prepareForReuse() {
@@ -30,6 +35,10 @@ final class ImagesListCell: UITableViewCell {
         gradient.frame = containerView.bounds
     }
     
+    @IBAction func likeButtonClocked() {
+        delegate?.imageListCellDidTapLike(self)
+    }
+    
     func setGradient() {
         let startColor = CGColor(red: 26, green: 27, blue: 34, alpha: 0)
         let endColor = CGColor(red: 26, green: 27, blue: 34, alpha: 0.2)
@@ -37,5 +46,12 @@ final class ImagesListCell: UITableViewCell {
         containerView.layer.insertSublayer(gradient, at: 0)
     }
     
+    func setIsLiked(_ isLiked: Bool) {
+        if isLiked {
+            likeButton.setImage(UIImage(named: "likeButtonOn"), for: .normal)
+        } else {
+            likeButton.setImage(UIImage(named: "likeButtonOff"), for: .normal)
+        }
+    }
 }
 

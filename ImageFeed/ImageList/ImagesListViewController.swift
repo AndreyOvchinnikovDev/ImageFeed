@@ -109,9 +109,8 @@ extension ImagesListViewController: UITableViewDataSource {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: ImagesListCell.reuseIdentifier,for: indexPath) as? ImagesListCell else {
             return UITableViewCell()
         }
-        
+        cell.delegate = self
         let photo = photos[indexPath.row]
-        
         cell.setGradient()
         cell.dateLabel.text = photo.createdAt
         cell.cellImage.kf.indicatorType = .activity
@@ -146,4 +145,26 @@ extension ImagesListViewController: UITableViewDelegate {
         let cellHeight = image.height * scale + imageInsets.top + imageInsets.bottom
         return cellHeight
     }
+}
+
+extension ImagesListViewController: ImagesListCellDelegate {
+    func imageListCellDidTapLike(_ cell: ImagesListCell) {
+        guard let indexPath = tableView.indexPath(for: cell) else { return }
+        let photo = photos[indexPath.row]
+        UIBlockingProgressHUD.show()
+        imageService.changeLike(photosId: photo.id, isLike: !photo.isLiked) { result in
+            switch result {
+            case .success():
+                self.photos = self.imageService.photos
+                cell.setIsLiked(self.photos[indexPath.row].isLiked)
+                UIBlockingProgressHUD.dismiss()
+            case .failure(let error):
+                UIBlockingProgressHUD.dismiss()
+                
+                assertionFailure(error.localizedDescription)
+            }
+        }
+    }
+    
+    
 }

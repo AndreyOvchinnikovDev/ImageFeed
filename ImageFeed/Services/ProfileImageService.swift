@@ -14,7 +14,6 @@ final class ProfileImageService {
     private var task: URLSessionTask?
     
     func fetchProfileImageURL(userName: String,  completion: @escaping(Result<String, Error>) -> Void) {
-        
         assert(Thread.isMainThread)
         task?.cancel()
         

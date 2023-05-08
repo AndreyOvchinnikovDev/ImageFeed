@@ -11,6 +11,7 @@ class ImageListService {
     private(set) var photos: [Photo] = []
     private var lastLoadedPage = 1
     private var task: URLSessionTask?
+    private var likeTask: URLSessionTask?
     static let didChangeNotification = Notification.Name(rawValue: "ImageListServiceDidChange")
     
     func fetchPhotosNextPage(completion: @escaping(Result<[Photo], Error>) -> Void) {
@@ -52,4 +53,50 @@ class ImageListService {
         self.task = task
         task.resume()
     }
+    
+    func changeLike(photosId: String, isLike: Bool, _ completion: @escaping (Result<Void, Error>) -> Void) {
+        likeTask?.cancel()
+        
+        var urlComponents = URLComponents(string: "https://api.unsplash.com")
+        urlComponents?.path = "/photos/\(photosId)/like"
+        
+        guard let url = urlComponents?.url else {
+            completion(.failure(NetworkError.invalidURL))
+            return
+        }
+        
+        guard let token = OAuth2TokenStorage().token else { return }
+        var request = URLRequest(url: url)
+        
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.httpMethod = isLike ? "POST" : "DELETE"
+        
+        let task = URLSession.shared.objectTask(for: request) { (result: Result<LikePhotoResult, Error>) in
+            switch result {
+                
+            case .success(_):
+                DispatchQueue.main.async {
+                    if let index = self.photos.firstIndex(where: { $0.id == photosId }) {
+                        let photo = self.photos[index]
+                        let newPhoto = Photo(id: photo.id,
+                                             size: photo.size,
+                                             createdAt: photo.createdAt,
+                                             welcomeDescription: photo.welcomeDescription,
+                                             thumbImageURL: photo.thumbImageURL,
+                                             largeImageURL: photo.largeImageURL,
+                                             isLiked: !photo.isLiked)
+                        self.photos[index] = newPhoto
+                    }
+                    completion(.success(()))
+                }
+            case .failure(let error):
+                completion(.failure(error))
+            }
+        }
+        self.likeTask = task
+        task.resume()
+    }
+    
 }
+
+
