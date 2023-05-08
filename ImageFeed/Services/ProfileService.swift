@@ -35,6 +35,7 @@ final class ProfileService {
                 self.task = nil
             case .failure(_):
                 completion(.failure(NetworkError.urlSessionError))
+                self.task = nil
             }
         }
         self.task = task

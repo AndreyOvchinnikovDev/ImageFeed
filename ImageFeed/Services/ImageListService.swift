@@ -45,8 +45,11 @@ class ImageListService {
                 }
                 NotificationCenter.default.post(name: ImageListService.didChangeNotification, object: self)
                 completion(.success(photos))
+                self.task = nil
             case .failure(let error):
+                completion(.failure(error))
                 print(error.localizedDescription)
+                self.task = nil
             }
             
         }
@@ -88,9 +91,11 @@ class ImageListService {
                         self.photos[index] = newPhoto
                     }
                     completion(.success(()))
+                    self.likeTask = nil
                 }
             case .failure(let error):
                 completion(.failure(error))
+                self.likeTask = nil
             }
         }
         self.likeTask = task

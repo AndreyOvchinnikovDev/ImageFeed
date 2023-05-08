@@ -35,7 +35,8 @@ final class ImagesListViewController: UIViewController {
         
         imageListServiceObserver = NotificationCenter.default.addObserver(
             forName: ImageListService.didChangeNotification,
-            object: nil, queue: .main,
+            object: nil,
+            queue: .main,
             using: { [weak self] _ in
                 guard let self else { return }
                 self.updateTableViewAnimated()
@@ -46,9 +47,8 @@ final class ImagesListViewController: UIViewController {
         if segue.identifier == showSingleImageSegueIdentifier {
             if let viewController = segue.destination as? SingleImageViewController, let indexPath = sender as? IndexPath {
                 
-                let imageName = photosName[indexPath.row]
-                let image = UIImage(named: "\(imageName)_full_size") ?? UIImage(named: imageName)
-                viewController.image = image
+                let imageName = photos[indexPath.row].largeImageURL
+                viewController.imageURL = URL(string: imageName)
             }
         } else {
             super.prepare(for: segue, sender: sender)
@@ -98,6 +98,15 @@ final class ImagesListViewController: UIViewController {
         }
     }
     
+    private func showAlert() {
+        let alert = UIAlertController(title: "Ошибка",
+                                      message: "Что-то пошло не так",
+                                      preferredStyle: .alert)
+        let action = UIAlertAction(title: "Ок", style: .default)
+        
+        alert.addAction(action)
+        present(alert, animated: true)
+    }
 }
 
 extension ImagesListViewController: UITableViewDataSource {
@@ -133,6 +142,7 @@ extension ImagesListViewController: UITableViewDataSource {
 
 extension ImagesListViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
         performSegue(withIdentifier: showSingleImageSegueIdentifier, sender: indexPath)
     }
     
@@ -158,10 +168,10 @@ extension ImagesListViewController: ImagesListCellDelegate {
                 self.photos = self.imageService.photos
                 cell.setIsLiked(self.photos[indexPath.row].isLiked)
                 UIBlockingProgressHUD.dismiss()
-            case .failure(let error):
+            case .failure(_):
                 UIBlockingProgressHUD.dismiss()
+                self.showAlert()
                 
-                assertionFailure(error.localizedDescription)
             }
         }
     }

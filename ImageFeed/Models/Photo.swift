@@ -25,6 +25,7 @@ struct Photo {
               largeImageURL: photo.urls.regular,
               isLiked: photo.likedByUser)
     }
+    
    private static func dateFormat(date: String) -> String {
         let dateIso8601 = ISO8601DateFormatter()
         let dateDate = dateIso8601.date(from: date) ?? Date()
