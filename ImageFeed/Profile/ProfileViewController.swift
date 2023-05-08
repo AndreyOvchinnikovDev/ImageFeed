@@ -7,6 +7,7 @@
 
 import UIKit
 import Kingfisher
+import WebKit
 
 final class ProfileViewController: UIViewController {
     private let profileService = ProfileService.shared
@@ -21,6 +22,7 @@ final class ProfileViewController: UIViewController {
     private let logoutButton: UIButton = {
         let button = UIButton(type: .custom)
         button.setImage(UIImage(named: "logout_button"), for: .normal)
+        button.addTarget(self, action: #selector(showAlertLogout), for: .touchUpInside)
         return button
     }()
     
@@ -61,7 +63,7 @@ final class ProfileViewController: UIViewController {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            guard let self = self else { return }
+            guard let self else { return }
             self.updateAvatar()
         }
         updateAvatar()
@@ -130,5 +132,39 @@ final class ProfileViewController: UIViewController {
         self.nameLabel.text = profile.name
         self.loginNameLabel.text = profile.loginName
         self.descriptionLabel.text = profile.bio
+    }
+    
+    private func cleanCookie() {
+        HTTPCookieStorage.shared.removeCookies(since: Date.distantPast)
+        WKWebsiteDataStore.default().fetchDataRecords(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes()) { records in
+            records.forEach { record in
+                WKWebsiteDataStore.default().removeData(ofTypes: record.dataTypes, for: [record], completionHandler: {})
+            }
+        }
+    }
+    
+    private func logout() {
+       OAuth2TokenStorage().deleteToken()
+       cleanCookie()
+       let splashViewController = SplashViewController()
+       splashViewController.isFirstLoad = true
+       splashViewController.modalPresentationStyle = .fullScreen
+       self.present(splashViewController, animated: true)
+    }
+    
+    @objc private func showAlertLogout() {
+        let alert = UIAlertController(title: "Выход из аккаунта",
+                                      message: "Вы уверены что хотите выйти",
+                                      preferredStyle: .alert)
+        let okAction = UIAlertAction(title: "Да", style: .default) { [weak self] _ in
+            guard let self else { return }
+            self.logout()
+        }
+        let noAction = UIAlertAction(title: "Нет", style: .default) { _ in
+            alert.dismiss(animated: true)
+        }
+        alert.addAction(okAction)
+        alert.addAction(noAction)
+        present(alert, animated: true)
     }
 }

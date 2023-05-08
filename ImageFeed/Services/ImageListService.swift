@@ -36,10 +36,8 @@ class ImageListService {
         let task = URLSession.shared.objectTask(for: request) { [weak self] (result: Result<[PhotoResult], Error>) in
             guard let self else { return }
             switch result {
-                
             case .success(let data):
                 let photos = data.map { photo in Photo.createPhoto(photo: photo) }
-                
                 DispatchQueue.main.async {
                     self.photos += photos
                 }
@@ -74,9 +72,9 @@ class ImageListService {
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.httpMethod = isLike ? "POST" : "DELETE"
         
-        let task = URLSession.shared.objectTask(for: request) { (result: Result<LikePhotoResult, Error>) in
+        let task = URLSession.shared.objectTask(for: request) { [weak self] (result: Result<LikePhotoResult, Error>) in
+            guard let self else { return }
             switch result {
-                
             case .success(_):
                 DispatchQueue.main.async {
                     if let index = self.photos.firstIndex(where: { $0.id == photosId }) {

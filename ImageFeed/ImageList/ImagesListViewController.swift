@@ -16,15 +16,6 @@ final class ImagesListViewController: UIViewController {
     private var imageService = ImageListService()
     private var photos: [Photo] = []
     
-    private let photosName: [String] = Array(0..<20).map{ "\($0)" }
-    
-    private lazy var dateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .long
-        formatter.timeStyle = .none
-        return formatter
-    }()
-    
     override var preferredStatusBarStyle: UIStatusBarStyle {
         UIStatusBarStyle.lightContent
     }
@@ -54,19 +45,6 @@ final class ImagesListViewController: UIViewController {
             super.prepare(for: segue, sender: sender)
         }
     }
-    
-    //    func configCell(for cell: ImagesListCell, with indexPath: IndexPath) {
-    //        guard let image = UIImage(named: photosName[indexPath.row]) else {
-    //            return
-    //        }
-    //        cell.cellImage.image = image
-    //        cell.setGradient()
-    //
-    //        cell.dateLabel.text = dateFormatter.string(from: Date())
-    //        let isLiked = indexPath.row % 2 == 0
-    //        let likeImage = isLiked ? UIImage(named: "likeButtonOn") : UIImage(named: "likeButtonOff")
-    //        cell.likeButton.setImage(likeImage, for: .normal)
-    //    }
     
     private func fetchPhotos() {
         imageService.fetchPhotosNextPage { [weak self] result in
@@ -171,10 +149,7 @@ extension ImagesListViewController: ImagesListCellDelegate {
             case .failure(_):
                 UIBlockingProgressHUD.dismiss()
                 self.showAlert()
-                
             }
         }
     }
-    
-    
 }

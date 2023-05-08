@@ -15,7 +15,7 @@ final class SplashViewController: UIViewController {
     private let imageService = ProfileImageService.shared
     private var storage = OAuth2TokenStorage()
     
-    private var isFirstLoad = true
+    var isFirstLoad = true
     
     private let imageView: UIImageView = {
         let image = UIImageView()
