@@ -13,8 +13,14 @@ final class ImagesListViewController: UIViewController {
     
     private let showSingleImageSegueIdentifier = "ShowSingleImage"
     private var imageListServiceObserver: NSObjectProtocol?
-    private var imageService = ImageListService()
+    private let imageService = ImageListService.shared
     private var photos: [Photo] = []
+    private var dateFormatter: DateFormatter = {
+        let dateFormatter = DateFormatter()
+        dateFormatter.locale = Locale(identifier: "ru")
+        dateFormatter.dateStyle = .long
+        return dateFormatter
+    }()
     
     override var preferredStatusBarStyle: UIStatusBarStyle {
         UIStatusBarStyle.lightContent
@@ -22,21 +28,14 @@ final class ImagesListViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        fetchPhotos()
-        
-        imageListServiceObserver = NotificationCenter.default.addObserver(
-            forName: ImageListService.didChangeNotification,
-            object: nil,
-            queue: .main,
-            using: { [weak self] _ in
-                guard let self else { return }
-                self.updateTableViewAnimated()
-            })
+        imageService.fetchPhotosNextPage()
+        photosObserver()
     }
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == showSingleImageSegueIdentifier {
-            if let viewController = segue.destination as? SingleImageViewController, let indexPath = sender as? IndexPath {
+            if let viewController = segue.destination as? SingleImageViewController,
+               let indexPath = sender as? IndexPath {
                 
                 let imageName = photos[indexPath.row].largeImageURL
                 viewController.imageURL = URL(string: imageName)
@@ -46,20 +45,14 @@ final class ImagesListViewController: UIViewController {
         }
     }
     
-    private func fetchPhotos() {
-        imageService.fetchPhotosNextPage { [weak self] result in
-            guard let self = self else {return}
-            DispatchQueue.main.async {
-                switch result {
-                case .success(let photos):
-                    self.photos += photos
-                    self.tableView.reloadData()
-                case .failure(let error):
-                    print(error.localizedDescription)
-                    break
-                }
+    private func photosObserver() {
+        imageListServiceObserver = NotificationCenter.default.addObserver(
+            forName: ImageListService.didChangeNotification,
+            object: nil,
+            queue: .main) { [weak self] _ in
+                guard let self else { return }
+                self.updateTableViewAnimated()
             }
-        }
     }
     
     private func updateTableViewAnimated() {
@@ -98,10 +91,14 @@ extension ImagesListViewController: UITableViewDataSource {
         }
         cell.delegate = self
         let photo = photos[indexPath.row]
+        cell.setIsLiked(self.photos[indexPath.row].isLiked)
         cell.setGradient()
-        cell.dateLabel.text = photo.createdAt
+        if let date = photo.createdAt {
+            cell.dateLabel.text = dateFormatter.string(from: date)
+        }
         cell.cellImage.kf.indicatorType = .activity
-        cell.cellImage.kf.setImage(with: URL(string: photo.thumbImageURL),                                placeholder: UIImage(named: "Stub")) { _ in
+        cell.cellImage.kf.setImage(with: URL(string: photo.thumbImageURL),
+                                   placeholder: UIImage(named: "Stub")) { _ in
             tableView.reloadRows(at: [indexPath], with: .automatic)
         }
         
@@ -109,8 +106,8 @@ extension ImagesListViewController: UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-        if indexPath.row == photos.count - 1 {
-            fetchPhotos()
+        if indexPath.row + 1 == photos.count {
+            imageService.fetchPhotosNextPage()
         }
     }
     func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {

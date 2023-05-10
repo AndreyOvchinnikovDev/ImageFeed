@@ -9,54 +9,60 @@ import Foundation
 
 class ImageListService {
     private(set) var photos: [Photo] = []
-    private var lastLoadedPage = 1
+    private var lastLoadedPage: Int?
     private var task: URLSessionTask?
     private var likeTask: URLSessionTask?
     static let didChangeNotification = Notification.Name(rawValue: "ImageListServiceDidChange")
+    static let shared = ImageListService()
     
-    func fetchPhotosNextPage(completion: @escaping(Result<[Photo], Error>) -> Void) {
-        task?.cancel()
+    func fetchPhotosNextPage() {
+        assert(Thread.isMainThread)
+        if task != nil { return }
         
-        let nextPage = lastLoadedPage
-        lastLoadedPage += 1
+        if lastLoadedPage == nil {
+            lastLoadedPage = 1
+        } else {
+            lastLoadedPage! += 1
+        }
+        
+        guard let lastLoadedPage = lastLoadedPage else { return }
         
         var urlComponents = URLComponents(string: "https://api.unsplash.com")
         urlComponents?.path = "/photos"
         urlComponents?.queryItems = [
-            URLQueryItem(name: "page", value: String(nextPage)),
+            URLQueryItem(name: "page", value: String(lastLoadedPage)),
             URLQueryItem(name: "per_page", value: String(10)),
             URLQueryItem(name: "client_id", value: Constants.accessKey)
         ]
-        guard let url = urlComponents?.url else {
-            completion(.failure(NetworkError.invalidURL))
-            return
-        }
+        guard let url = urlComponents?.url else { return }
         
-        let request = URLRequest(url: url)
+        guard let token = OAuth2TokenStorage().token else { return }
+        var request = URLRequest(url: url)
+        
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        
         let task = URLSession.shared.objectTask(for: request) { [weak self] (result: Result<[PhotoResult], Error>) in
             guard let self else { return }
             switch result {
             case .success(let data):
                 let photos = data.map { photo in Photo.createPhoto(photo: photo) }
-                DispatchQueue.main.async {
-                    self.photos += photos
-                }
-                NotificationCenter.default.post(name: ImageListService.didChangeNotification, object: self)
-                completion(.success(photos))
+                self.photos += photos
+                NotificationCenter.default.post(
+                    name: ImageListService.didChangeNotification,
+                    object: self)
                 self.task = nil
             case .failure(let error):
-                completion(.failure(error))
                 print(error.localizedDescription)
                 self.task = nil
             }
-            
         }
         self.task = task
         task.resume()
     }
     
     func changeLike(photosId: String, isLike: Bool, _ completion: @escaping (Result<Void, Error>) -> Void) {
-        likeTask?.cancel()
+        assert(Thread.isMainThread)
+        if likeTask != nil { return }
         
         var urlComponents = URLComponents(string: "https://api.unsplash.com")
         urlComponents?.path = "/photos/\(photosId)/like"

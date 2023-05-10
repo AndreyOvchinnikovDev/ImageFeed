@@ -144,12 +144,11 @@ final class ProfileViewController: UIViewController {
     }
     
     private func logout() {
-       OAuth2TokenStorage().deleteToken()
-       cleanCookie()
-       let splashViewController = SplashViewController()
-       splashViewController.isFirstLoad = true
-       splashViewController.modalPresentationStyle = .fullScreen
-       self.present(splashViewController, animated: true)
+        OAuth2TokenStorage().deleteToken()
+        cleanCookie()
+        guard let window = UIApplication.shared.windows.first else { fatalError("Invalid Configuration")}
+        let splashViewController = SplashViewController()
+        window.rootViewController = splashViewController
     }
     
     @objc private func showAlertLogout() {
