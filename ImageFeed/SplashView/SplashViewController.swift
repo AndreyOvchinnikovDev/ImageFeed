@@ -15,7 +15,7 @@ final class SplashViewController: UIViewController {
     private let imageService = ProfileImageService.shared
     private var storage = OAuth2TokenStorage()
     
-    private var isFirstLoad = true
+    var isFirstLoad = true
     
     private let imageView: UIImageView = {
         let image = UIImageView()
@@ -59,8 +59,6 @@ final class SplashViewController: UIViewController {
         imageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.clipsToBounds = true
         NSLayoutConstraint.activate([
-//            imageView.widthAnchor.constraint(equalToConstant: 70),
-//            imageView.heightAnchor.constraint(equalToConstant: 70),
             imageView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
             imageView.centerXAnchor.constraint(equalTo: view.centerXAnchor)
         ])

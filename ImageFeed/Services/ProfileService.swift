@@ -14,7 +14,6 @@ final class ProfileService {
     static let shared = ProfileService()
     
     func fetchProfile(_ token: String, completion: @escaping (Result<Profile, Error>) -> Void) {
-        
         assert(Thread.isMainThread)
         task?.cancel()
         
@@ -36,6 +35,7 @@ final class ProfileService {
                 self.task = nil
             case .failure(_):
                 completion(.failure(NetworkError.urlSessionError))
+                self.task = nil
             }
         }
         self.task = task

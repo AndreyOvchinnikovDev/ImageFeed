@@ -14,7 +14,6 @@ final class ProfileImageService {
     private var task: URLSessionTask?
     
     func fetchProfileImageURL(userName: String,  completion: @escaping(Result<String, Error>) -> Void) {
-        
         assert(Thread.isMainThread)
         task?.cancel()
         
@@ -44,6 +43,7 @@ final class ProfileImageService {
                 self.task = nil
             case .failure(_):
                 completion(.failure(NetworkError.urlSessionError))
+                self.task = nil
             }
         }
         self.task = task
