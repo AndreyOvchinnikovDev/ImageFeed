@@ -9,9 +9,15 @@ import UIKit
 import Kingfisher
 import WebKit
 
-final class ProfileViewController: UIViewController {
+public protocol ProfileViewControllerProtocol: AnyObject {
+    var presenter: ProfileViewPresenterProtocol? { get set }
+    func updateAvatar()
+}
+
+final class ProfileViewController: UIViewController & ProfileViewControllerProtocol {
+    var presenter: ProfileViewPresenterProtocol?
+    
     private let profileService = ProfileService.shared
-    private var profileImageServiceObserver: NSObjectProtocol?
     
     private let imageView: UIImageView = {
         let image = UIImageView()
@@ -58,15 +64,7 @@ final class ProfileViewController: UIViewController {
         setupSubviews(imageView, logoutButton, nameLabel, loginNameLabel, descriptionLabel)
         setupConstraints()
         
-        profileImageServiceObserver = NotificationCenter.default.addObserver(
-            forName: ProfileImageService.didChangeNotification,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            guard let self else { return }
-            self.updateAvatar()
-        }
-        updateAvatar()
+        presenter?.profileImageObserver()
         
         if let profile = profileService.profile {
             updateProfileDetails(profile: profile)
@@ -110,7 +108,7 @@ final class ProfileViewController: UIViewController {
         }
     }
     
-    private func updateAvatar() {
+    func updateAvatar() {
         guard
             let profileImageURL = ProfileImageService.shared.avatarURL,
             let url = URL(string: profileImageURL)
@@ -128,42 +126,13 @@ final class ProfileViewController: UIViewController {
         )
     }
     
-    private func updateProfileDetails(profile: Profile) {
+    func updateProfileDetails(profile: Profile) {
         self.nameLabel.text = profile.name
         self.loginNameLabel.text = profile.loginName
         self.descriptionLabel.text = profile.bio
     }
     
-    private func cleanCookie() {
-        HTTPCookieStorage.shared.removeCookies(since: Date.distantPast)
-        WKWebsiteDataStore.default().fetchDataRecords(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes()) { records in
-            records.forEach { record in
-                WKWebsiteDataStore.default().removeData(ofTypes: record.dataTypes, for: [record], completionHandler: {})
-            }
-        }
-    }
-    
-    private func logout() {
-        OAuth2TokenStorage().deleteToken()
-        cleanCookie()
-        guard let window = UIApplication.shared.windows.first else { fatalError("Invalid Configuration")}
-        let splashViewController = SplashViewController()
-        window.rootViewController = splashViewController
-    }
-    
     @objc private func showAlertLogout() {
-        let alert = UIAlertController(title: "Выход из аккаунта",
-                                      message: "Вы уверены что хотите выйти",
-                                      preferredStyle: .alert)
-        let okAction = UIAlertAction(title: "Да", style: .default) { [weak self] _ in
-            guard let self else { return }
-            self.logout()
-        }
-        let noAction = UIAlertAction(title: "Нет", style: .default) { _ in
-            alert.dismiss(animated: true)
-        }
-        alert.addAction(okAction)
-        alert.addAction(noAction)
-        present(alert, animated: true)
+        presenter?.showLogoutAlert(vc: self)
     }
 }
