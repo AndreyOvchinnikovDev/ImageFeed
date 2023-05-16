@@ -7,6 +7,28 @@
 @testable import ImageFeed
 import XCTest
 
+final class ProfileImageServiceStub: ProfileImageServiceProtocol {
+    var avatarURL: String?
+    var avatarImage = UIImageView()
+    
+    func fetchProfileImageURL(userName: String, completion: @escaping (Result<String, Error>) -> Void) { }
+    
+    func setImage(avatarUrl: String) {
+        guard let url = URL(string: avatarUrl) else { return }
+        avatarImage.kf.setImage(with: url)
+    }
+    
+}
+
+final class ProfileViewControllerSpy: ProfileViewControllerProtocol {
+    var presenter: ProfileViewPresenterProtocol?
+    let imageService = ProfileImageServiceStub()
+    var avatarURL = "https://kafel.ee/wp-content/uploads/2019/02/013-duck.png"
+    func updateAvatar() {
+        imageService.setImage(avatarUrl: avatarURL)
+    }
+}
+
 final class ProfileViewPresenterSpy: ProfileViewPresenterProtocol {
     var view: ProfileViewControllerProtocol?
     var viewDidLoadCalled = false
@@ -34,7 +56,6 @@ final class ProfileViewTests: XCTestCase {
         presenter.view = profileViewController
         
         //when
-        
         _ = profileViewController.view
         
         //then
@@ -54,4 +75,15 @@ final class ProfileViewTests: XCTestCase {
         XCTAssertEqual(presenter.presentedViewController, profileViewController)
     }
     
+    func testUpdateImage() {
+        //given
+        let viewController = ProfileViewControllerSpy()
+        let profileImageService = ProfileImageServiceStub()
+        
+        //when
+        viewController.updateAvatar()
+        
+        //then
+        XCTAssertNotNil(profileImageService.avatarImage)
+    }
 }
