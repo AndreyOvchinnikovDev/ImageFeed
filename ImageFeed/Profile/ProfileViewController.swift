@@ -29,6 +29,7 @@ final class ProfileViewController: UIViewController & ProfileViewControllerProto
         let button = UIButton(type: .custom)
         button.setImage(UIImage(named: "logout_button"), for: .normal)
         button.addTarget(self, action: #selector(showAlertLogout), for: .touchUpInside)
+        button.accessibilityIdentifier = "LogoutButton"
         return button
     }()
     
