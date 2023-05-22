@@ -7,10 +7,15 @@
 
 import Foundation
 
-final class ProfileImageService {
+protocol ProfileImageServiceProtocol: AnyObject {
+    var avatarURL: String? { get set }
+    func fetchProfileImageURL(userName: String,  completion: @escaping(Result<String, Error>) -> Void)
+}
+
+final class ProfileImageService: ProfileImageServiceProtocol {
     static let shared = ProfileImageService()
     static let didChangeNotification = Notification.Name(rawValue: "ProfileImageProviderDidChange")
-    private(set) var avatarURL: String?
+    var avatarURL: String?
     private var task: URLSessionTask?
     
     func fetchProfileImageURL(userName: String,  completion: @escaping(Result<String, Error>) -> Void) {

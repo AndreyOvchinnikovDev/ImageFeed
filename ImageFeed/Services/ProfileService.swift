@@ -17,7 +17,7 @@ final class ProfileService {
         assert(Thread.isMainThread)
         task?.cancel()
         
-        guard let url = Constants.defaultBaseURL else {
+        guard let url = URL(string: "https://api.unsplash.com/me") else {
             completion(.failure(NetworkError.invalidURL))
             return
         }

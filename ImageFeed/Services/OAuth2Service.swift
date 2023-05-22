@@ -20,11 +20,6 @@ protocol NetworkRouting {
 }
 
 class OAuth2Service: NetworkRouting {
-    enum Urls: String {
-        case urlToGetCode = "https://unsplash.com/oauth/authorize"
-        case urlToGetToken = "https://unsplash.com/oauth/token"
-    }
-    
     private var task: URLSessionTask?
     private var lastCode: String?
     
@@ -34,7 +29,7 @@ class OAuth2Service: NetworkRouting {
         task?.cancel()
         lastCode = code
         
-        guard var urlComponents = URLComponents(string: Urls.urlToGetToken.rawValue) else { return }
+        guard var urlComponents = URLComponents(string: AuthConfiguration.standard.urlToGetToken) else { return }
         urlComponents.queryItems = [
             URLQueryItem(name: "client_id", value: Constants.accessKey),
             URLQueryItem(name: "client_secret", value: Constants.secretKey),
